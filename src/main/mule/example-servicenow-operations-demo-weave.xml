@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:servicenow="http://www.mulesoft.org/schema/mule/servicenow" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/servicenow http://www.mulesoft.org/schema/mule/servicenow/current/mule-servicenow.xsd">
+	<configuration-properties file="mule-app.properties"/>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="e93a537c-2e69-470d-8514-a3dfa724b2ed" basePath="/">
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<servicenow:config name="ServiceNow_Config" doc:name="ServiceNow Config" doc:id="c7ccd8b5-361e-4471-9e78-fa7f687e7485" >
+		<servicenow:basic-connection username="${servicenow.username}" password="${servicenow.password}" serviceAddress="${servicenow.serviceEndpoint}" >
+			<servicenow:transport >
+				<servicenow:basic-auth-http-message-dispatcher-provider username="${servicenow.username}" password="${servicenow.password}" />
+			</servicenow:transport>
+		</servicenow:basic-connection>
+	</servicenow:config>
+	<flow name="servicenow-operations-form-Flow" doc:id="5e431313-5467-4087-b903-d5081a36d51e" >
+		<http:listener config-ref="HTTP_Listener_config" path="/" doc:name="/" doc:id="bb188626-3692-4390-961e-b5a657dfc8de" />
+		<parse-template location="servicenow-operations-demo.html" doc:name="Parse Template" doc:id="35e35cfe-5f3c-4841-8d00-5dd4de19b282" />
+	</flow>
+	<flow name="demo-insert-incident" doc:id="0142548b-5fbe-41b9-92f9-72524262c0e6" >
+		<http:listener config-ref="HTTP_Listener_config" path="/insert" doc:name="/insert" doc:id="411d4c35-e95a-4f1f-b41b-cb76fc116ce8" />
+		<ee:transform doc:name="Create Insert Request" doc:id="8df83e84-f88a-49a6-afd4-1069fabf7236" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://www.service-now.com/incident
+---
+{
+	ns0#insert: {
+		ns0#active: true,
+		ns0#category: attributes.queryParams.category,
+		ns0#description: attributes.queryParams.description,
+		ns0#impact: 1,
+		ns0#urgency: 1
+	}
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="myPayload" ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://www.service-now.com/incident
+---
+{
+	ns0#insert: {
+		ns0#active: true,
+		ns0#category: attributes.queryParams.category,
+		ns0#description: attributes.queryParams.description,
+		ns0#impact: 1,
+		ns0#urgency: 1
+	}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<servicenow:invoke config-ref="ServiceNow_Config" operation="insert" doc:name="Insert" doc:id="90378610-2335-4352-b13b-006033befe19" service="incident">
+			<servicenow:message>
+				<servicenow:body ><![CDATA[#[vars.myPayload]]]></servicenow:body>
+			</servicenow:message>
+		</servicenow:invoke>
+		<ee:transform doc:name="XML to JSON" doc:id="030fbc51-c246-467e-9f1f-b9de4cd1c0f5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Status : "Record was successfully created",
+	IDs : {
+		SystemId : payload.body.insertResponse.sys_id,
+		IncidentNumber : payload.body.insertResponse.number
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="demo-getkeys-incident" doc:id="d15a2d51-9580-4742-9c11-ec970c2d9971" >
+		<http:listener config-ref="HTTP_Listener_config" path="/getkeys" doc:name="/getkeys" doc:id="f98507f5-ed6c-4f93-adb4-7500519e6d36" />
+		<ee:transform doc:name="Create GetKeys Request" doc:id="bae3bd18-cf49-4459-a15e-7444655170e7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://www.service-now.com/incident
+---
+{
+	ns0#getKeys: {		
+		ns0#description: attributes.queryParams.description		
+	}
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="myPayload" ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://www.service-now.com/incident
+---
+{
+	ns0#getKeys: {		
+		ns0#description: attributes.queryParams.description		
+	}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<servicenow:invoke config-ref="ServiceNow_Config" service="incident" operation="getKeys" doc:name="ServiceNow - GetKeys" doc:id="d9ffadc9-4232-474f-801b-b0f6031633ae" >
+			<servicenow:message >
+				<servicenow:body ><![CDATA[#[vars.myPayload]]]></servicenow:body>
+			</servicenow:message>
+		</servicenow:invoke>
+		<ee:transform doc:name="XML to JSON" doc:id="dc7fe91a-94e2-4bf9-9adc-82f63487473d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Status : payload.body.getKeysResponse.count default "0" ++ " records",
+	Keys : payload.body.getKeysResponse.sys_id default "None"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="demo-getrecords-incident" doc:id="f62f1e05-1bd5-4757-aba0-8ba1588e7f94" >
+		<http:listener config-ref="HTTP_Listener_config" path="/getrecords" doc:name="/getrecords" doc:id="c539d56c-a02b-4274-b4f2-84f172220833" />
+		<ee:transform doc:name="Create GetRecords Request" doc:id="04daa7b4-5aa8-4723-91e4-e45b8bdbdabf" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://www.service-now.com/incident
+---
+{
+	ns0#getRecords: {
+		ns0#description: attributes.queryParams.description
+	}
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="myPayload" ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://www.service-now.com/incident
+---
+{
+	ns0#getRecords: {
+		ns0#description: attributes.queryParams.description
+	}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<servicenow:invoke config-ref="ServiceNow_Config" service="incident" operation="getRecords" doc:name="ServiceNow - GetRecords" doc:id="0ab2c7f3-ad19-4d69-ba16-a399f32ed586" >
+			<servicenow:message >
+				<servicenow:body ><![CDATA[#[vars.myPayload]]]></servicenow:body>
+			</servicenow:message>
+		</servicenow:invoke>
+		<ee:transform doc:name="XML to JSON" doc:id="06e9df70-1126-4dbb-ac42-6cd208be0dc3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+Records: if (payload.body.getRecordsResponse.getRecordsResult != null) payload.body.getRecordsResponse.*getRecordsResult map (item,index) -> {
+		Record :  {
+			active : if (item.active != 0) true else false,
+			activityDue : item.activity_due,
+			category : item.category,
+			description : item.description,
+			number : item.number,
+			openedAt : item.opened_at,
+			openedBy : item.opened_by,
+			systemClassName : item.sys_class_name,
+			systemCreatedBy : item.sys_created_by,
+			systemId : item.sys_id
+		}
+
+	} else "None"
+	
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="demo-deletemultiple-incident" doc:id="a11915ce-d4fb-4a8b-a5cb-3f116a29f879" >
+		<http:listener config-ref="HTTP_Listener_config" path="/deletemultiple" doc:name="/deletemultiple" doc:id="fab566af-93d0-4be7-9c46-d7ef93918d4a" />
+		<ee:transform doc:name="Create DeleteMultiple Request" doc:id="93966fbb-2850-4386-aec2-c9add46faa38" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://www.service-now.com/incident
+---
+{
+	ns0#deleteMultiple: {
+		ns0#description: attributes.queryParams.description
+	}
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="myPayload" ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://www.service-now.com/incident
+---
+{
+	ns0#deleteMultiple: {
+		ns0#description: attributes.queryParams.description
+	}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<servicenow:invoke config-ref="ServiceNow_Config" service="incident" operation="deleteMultiple" doc:name="ServiceNow - DeleteMultiple" doc:id="cb05c6e9-74a2-4c8b-b0e1-5bd49835d4ed" >
+			<servicenow:message >
+				<servicenow:body ><![CDATA[#[vars.myPayload]]]></servicenow:body>
+			</servicenow:message>
+		</servicenow:invoke>
+		<ee:transform doc:name="XML to JSON" doc:id="31522218-bbd4-4b14-b8ea-ac67adc6c4e9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Status" : payload.body.deleteMultipleResponse.count default "0" ++ " records were successfully deleted"
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="demo-update" doc:id="7737d549-89d9-44e3-abc5-66baa3d226d8" >
+		<http:listener config-ref="HTTP_Listener_config" path="/update" doc:name="/update" doc:id="2f70aa08-0fcc-4461-b169-b68e6d8851d0" />
+		<ee:transform doc:name="Create Insert Request" doc:id="3488c6b0-9b3e-4d5d-b58f-6e7ca6892dfb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://www.service-now.com/incident
+---
+{
+	ns0#insert: {
+		ns0#active: true,		
+		ns0#category: attributes.queryParams.category,		
+		ns0#description: attributes.queryParams.description,		
+		ns0#impact: 1,		
+		ns0#urgency: 1
+	}
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="myPayload" ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://www.service-now.com/incident
+---
+{
+	ns0#insert: {
+		ns0#active: true,		
+		ns0#category: attributes.queryParams.category,		
+		ns0#description: attributes.queryParams.description,		
+		ns0#impact: 1,		
+		ns0#urgency: 1
+	}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<servicenow:invoke config-ref="ServiceNow_Config" service="incident" operation="insert" doc:name="ServiceNow Insert" doc:id="440347e8-bed4-45ba-9ddd-00411ea87378" >
+			<servicenow:message >
+				<servicenow:body ><![CDATA[#[vars.myPayload]]]></servicenow:body>
+			</servicenow:message>
+		</servicenow:invoke>
+		<ee:transform doc:name="Create Update Request" doc:id="71051632-e302-4952-8b48-5da90616f9f6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="myPayload2" ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://www.service-now.com/incident
+---
+{
+	ns0#update: {		
+		ns0#category: vars.myPayload.category,
+		ns0#description: vars.myPayload.updatedesc,
+		ns0#impact: 1,		
+		ns0#sys_id: payload.body.insertResponse.sys_id,
+		ns0#urgency: 1
+	}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<servicenow:invoke config-ref="ServiceNow_Config" service="incident" operation="update" doc:name="ServiceNow Update" doc:id="8fdf10a7-9677-4d1e-8bfb-7fce85fd042f" >
+			<servicenow:message >
+				<servicenow:body ><![CDATA[#[vars.myPayload2]]]></servicenow:body>
+			</servicenow:message>
+		</servicenow:invoke>
+		<ee:transform doc:name="XML to JSON" doc:id="88cd467c-663a-4fef-8bc7-10890d394081" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Status" : "Record was successfully updated",
+	"SystemId" : payload.body.updateResponse.sys_id
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

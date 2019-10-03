@@ -1,0 +1,254 @@
+<!--
+
+    (c) 2003-2016 MuleSoft, Inc. This software is protected under international
+    copyright law. All use of this software is subject to MuleSoft's Master
+    Subscription Agreement (or other Terms of Service) separately entered
+    into between you and MuleSoft. If such an agreement is not in
+    place, you may not use the software.
+
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <!-- JQuery will be required for this demo -->
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.js"></script>
+
+    <!-- Import Twitter bootstrap libs + css -->
+    <link rel="stylesheet" type="text/css"
+          href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.1.1/css/bootstrap.css">
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.1.1/js/bootstrap.js"></script>
+</head>
+<body>
+<!-- Keep this simple ... define CSS for this simple webpage in the same file -->
+<style>
+    body {
+    padding-top: 40px;
+    padding-bottom: 40px;
+    background-color: #eee;
+    }
+    .demo-form {
+    max-width: 500px;
+    padding: 15px;
+    margin: 0 auto;
+    }
+    .demo-form .demo-heading,
+    .demo-form .checkbox {
+    margin-bottom: 10px;
+    }
+    .demo-form .checkbox {
+    font-weight: normal;
+    }
+    .demo-form .form-control {
+    position: relative;
+    height: auto;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    padding: 10px;
+    font-size: 16px;
+    }
+    .demo-form .form-control:focus {
+    z-index: 2;
+    }
+</style>
+<script type="text/javascript">
+		$(document).ready( function() {
+
+			var operationOne 	= $('#operationOne');
+			var operationTwo 	= $('#operationTwo');
+			var operationThree 	= $('#operationThree');
+			var operationFour 	= $('#operationFour');
+			var operationFive 	= $('#operationFive');
+
+			var operationOneForm 	= $('#operationOneForm');
+			var operationTwoForm 	= $('#operationTwoForm');
+			var operationThreeForm 	= $('#operationThreeForm');
+			var operationFourForm 	= $('#operationFourForm');
+			var operationFiveForm 	= $('#operationFiveForm');
+
+			operationOneForm.submit(function() {
+              $.ajax({
+                type: 'GET',							  // Submit an HTTP POST request
+                url: '/insert', // The URL where your endpoint is listening
+                data: operationOneForm.serialize(),			  // Serialized form URL-encoded input
+                success: function(data) {				  // Success function called if request succeeds
+                  alert("Operation Response : " + JSON.stringify(data));
+                },
+                error: function(request, status, error){  // Error function is executed if an exception occurs in the flow
+              	  alert(request.responseText);			  // Alert the user of any errors
+              	}
+              });
+
+              return false;								  // Let jQuery handle the form submission
+            });
+
+			operationTwoForm.submit(function() {
+				$.ajax({
+					type: 'GET',
+					url: '/getkeys',
+					data: operationTwoForm.serialize(),
+					success: function(data) {
+						alert("Operation Response : " + JSON.stringify(data));
+					},
+					error: function(request, status, error){
+	            		alert(request.responseText);
+	            	}
+				});
+
+				return false;
+			});
+
+			operationThreeForm.submit(function() {
+				$.ajax({
+					type: 'GET',
+					url: '/getrecords',
+					data: operationThreeForm.serialize(),
+					success: function(data) {
+						alert("Operation Response : " + JSON.stringify(data));
+					},
+					error: function(request, status, error){
+	            		alert(request.responseText);
+	            	}
+				});
+
+				return false;
+			});
+
+			operationFourForm.submit(function() {
+				$.ajax({
+					type: 'GET',
+					url: '/deletemultiple',
+					data: operationFourForm.serialize(),
+					success: function(data) {
+						alert("Operation Response : " + JSON.stringify(data));
+					},
+					error: function(request, status, error){
+	            		alert(request.responseText);
+	            	}
+				});
+
+				return false;
+			});
+
+			operationFiveForm.submit(function() {
+				$.ajax({
+					type: 'GET',
+					url: '/update',
+					data: operationFiveForm.serialize(),
+					success: function(data) {
+						alert("Operation Response : " + JSON.stringify(data));
+					},
+					error: function(request, status, error){
+	            		alert(request.responseText);
+	            	}
+				});
+
+				return false;
+			});
+
+
+		});
+
+
+</script>
+<div class="container">
+    <div class="panel-group" id="accordion">
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h2 class="panel-title demo-heading">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#operationOne">Insert</a>
+                </h2>
+            </div>
+            <div id="operationOne" class="panel-collapse collapse in">
+                <div class="panel-body">
+                    <form id="operationOneForm" class="demo-form" role="form">
+                        <label>Category</label>
+                        <input type="text" name="category" value="Software" required class="form-control"><br>
+                        <label>Description</label>
+                        <input type="text" name="description" value="Test WSDL QA" required class="form-control"><br>
+                        <input class="btn btn-lg btn-primary btn-block" type="submit" value="Insert"><br>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h2 class="panel-title demo-heading">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#operationTwo">Get Keys</a>
+                </h2>
+            </div>
+            <div id="operationTwo" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <form id="operationTwoForm" class="demo-form" role="form">                        
+                        <label>Description</label>
+                        <input type="text" name="description" value="Test WSDL QA" required class="form-control"><br>
+                        <input class="btn btn-lg btn-primary btn-block" type="submit" value="Get Keys"><br>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h2 class="panel-title demo-heading">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#operationThree">Get Records</a>
+                </h2>
+            </div>
+            <div id="operationThree" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <form id="operationThreeForm" class="demo-form" role="form">
+                        <label>Description</label>
+                        <input type="text" name="description" value="Test WSDL QA" required class="form-control"><br>
+                        <input class="btn btn-lg btn-primary btn-block" type="submit" value="Get Records"><br>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h2 class="panel-title demo-heading">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#operationFour">Delete Multiple</a>
+                </h2>
+            </div>
+            <div id="operationFour" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <form id="operationFourForm" class="demo-form" role="form">
+                        <label>Description</label>
+                        <input type="text" name="description" value="Test WSDL QA" required class="form-control"><br>
+                        <input class="btn btn-lg btn-primary btn-block" type="submit" value="Delete Multiple"><br>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h2 class="panel-title demo-heading">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#operationFive">Update</a>
+                </h2>
+            </div>
+            <div id="operationFive" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <form id="operationFiveForm" class="demo-form" role="form">
+                        <label>Category</label>
+                        <input type="text" name="category" value="Software" required class="form-control"><br>
+                        <label>Description</label>
+                        <input type="text" name="description" value="Test WSDL QA" required class="form-control"><br>
+                        <label>Updated Description</label>
+                        <input type="text" name="updatedesc" value="Updated Test WSDL QA" required class="form-control"><br>
+                        <input class="btn btn-lg btn-primary btn-block" type="submit" value="Update"><br>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>
